@@ -1,0 +1,29 @@
+#spring.datasource.url=jdbc:postgresql://localhost:5432/andqxai
+server:
+  port: 9999
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/telegrambot
+    username: postgres
+    password: root123
+  profiles:
+    active: #activeProfile#
+  sql:
+    init:
+      mode: never
+  jpa:
+    hibernate:
+      ddl-auto: create
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+#  config:
+#    activate:
+#      on-profile: spring.profiles.active@
+
+bot:
+  username: khodir_smm_bot
+  token: 6899467533:AAHa8OI2oHPoZp5SpQmsT76nsJNU-y3FVJA
+#  username: SotildiZuhrmedia_bot
+#  token: 6561395483:AAHaLP6JdFTWg0hupTYi1jfQfUJpbiPKH7k
