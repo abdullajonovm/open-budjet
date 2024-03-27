@@ -10,7 +10,7 @@ spring:
     active: #activeProfile#
   sql:
     init:
-      mode: never
+      mode: always
   jpa:
     hibernate:
       ddl-auto: create

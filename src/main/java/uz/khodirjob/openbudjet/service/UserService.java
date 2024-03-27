@@ -1,8 +1,19 @@
 package uz.khodirjob.openbudjet.service;
 
+import com.sun.jdi.event.ExceptionEvent;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -16,6 +27,8 @@ import uz.khodirjob.openbudjet.repository.UserRepository;
 import uz.khodirjob.openbudjet.repository.VoteRepository;
 
 import javax.xml.crypto.dsig.spec.HMACParameterSpec;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,15 +43,19 @@ public class UserService {
 
     public SendMessage addUser(Message message) {
         Optional<User> byChatId = userRepository.findByChatId(message.getChatId());
-        if (byChatId.isPresent())
+        if (!message.getChatId().equals(message.getContact().getUserId()))
             return null;
 
-        User user = User.builder()
-                .chatId(message.getChatId())
-                .phoneNumber(message.getContact().getPhoneNumber())
-                .userName(message.getFrom().getUserName())
-                .firstName(message.getFrom().getFirstName())
-                .build();
+        User user = null;
+        if (byChatId.isPresent())
+            user = byChatId.get();
+        else
+            user = User.builder()
+                    .chatId(message.getChatId())
+                    .phoneNumber(message.getContact().getPhoneNumber())
+                    .userName(message.getFrom().getUserName())
+                    .firstName(message.getFrom().getFirstName())
+                    .build();
         if (message.getContact().getPhoneNumber().contains("950035369")) {
             user.setIsAdmin(true);
         }
@@ -75,15 +92,20 @@ public class UserService {
     }
 
     public List<SendMessage> confirm(Long chatId) {
-        User user = userRepository.findByIsAdmin(true).get();
         List<SendMessage> messageList = new ArrayList<>();
+        User user = userRepository.findByIsAdmin(true).get();
+        for (User user1 : userRepository.findAllByIsAdmin(true)) {
+
+        }
+
         messageList.add(SendMessage.builder()
                 .text(KeyWords.VOTE_CHEK_MESSAGE)
                 .chatId(chatId)
                 .build());
+
         User user1 = userRepository.findByChatId(chatId).get();
         Vote vote = Vote.builder()
-                .user(user)
+                .user(user1)
                 .confirmVote(LocalDateTime.now())
                 .build();
 
@@ -180,7 +202,7 @@ public class UserService {
         Integer voteId = Integer.parseInt(data.substring(12));
         Vote vote = voteRepository.findById(voteId).get();
         User user = vote.getUser();
-        if (!user.getIsAdmin())
+        if (user.getIsAdmin() == null)
             user.setIsBlocked(true);
         userRepository.save(user);
 
@@ -198,5 +220,112 @@ public class UserService {
 
         return messageList;
 
+    }
+
+    public boolean chekUser(Long chatId) {
+        Optional<User> byChatId = userRepository.findByChatId(chatId);
+        Boolean isBlocked = null;
+        if (byChatId.isPresent())
+            isBlocked = byChatId.get().getIsBlocked();
+
+        return isBlocked == null ? false : isBlocked;
+    }
+
+    public boolean chekVote(Long chatId) {
+        Optional<User> byChatId = userRepository.findByChatId(chatId);
+        Boolean isVoted = null;
+        if (byChatId.isPresent())
+            isVoted = byChatId.get().getIsVoted();
+
+        return isVoted == null ? false : isVoted;
+    }
+
+    public SendDocument getVotes(Long chatId) {
+        try {
+            Optional<User> byChatId = userRepository.findByChatId(chatId);
+            if (byChatId.isEmpty() || byChatId.get().getIsAdmin() == null)
+                return null;
+            SendDocument sendDocument = new SendDocument();
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            XSSFSheet sheet = workbook.createSheet("Berilgan ovozlar");
+            XSSFRow row;
+            int rowId = 0;
+            row = sheet.createRow(rowId++);
+            XSSFCell voteId = row.createCell(1);
+            voteId.setCellValue("ID");
+            XSSFCell phoneNumber = row.createCell(2);
+            phoneNumber.setCellValue("Telefon raqam");
+            XSSFCell confirmTime = row.createCell(3);
+            confirmTime.setCellValue("Ovoz berilgan vaqti");
+            XSSFCell status = row.createCell(4);
+            status.setCellValue("Xolati");
+
+
+            for (Vote vote : voteRepository.findAll()) {
+                try {
+                    row = sheet.createRow(rowId++);
+                    CellStyle redStyle = workbook.createCellStyle();
+                    redStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+                    redStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    CellStyle yellowStyle = workbook.createCellStyle();
+                    yellowStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+                    yellowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    CellStyle greenStyle = workbook.createCellStyle();
+                    greenStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+                    greenStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+
+                    XSSFCell cell0 = row.createCell(1);
+                    cell0.setCellValue(vote.getId());
+
+                    XSSFCell cell1 = row.createCell(2);
+                    cell1.setCellValue("'" + vote.getUser().getPhoneNumber());
+
+                    XSSFCell cell2 = row.createCell(3);
+                    cell2.setCellValue(vote.getConfirmVote().toString());
+
+                    XSSFCell cell = row.createCell(4);
+                    if (vote.getIsSuccess() == null) {
+                        row.setRowStyle(yellowStyle);
+                        cell.setCellValue("Tekshirilmadi");
+                        cell.setCellStyle(yellowStyle);
+                        cell1.setCellStyle(yellowStyle);
+                        cell2.setCellStyle(yellowStyle);
+                        cell0.setCellStyle(yellowStyle);
+                    } else if (vote.getIsSuccess()) {
+                        cell.setCellValue("Qabul qilindi");
+                        cell.setCellStyle(greenStyle);
+                        cell1.setCellStyle(greenStyle);
+                        cell2.setCellStyle(greenStyle);
+                        cell0.setCellStyle(greenStyle);
+                        row.setRowStyle(greenStyle);
+                    } else {
+                        cell.setCellValue("Qabul qilinmagdi");
+                        cell.setCellStyle(redStyle);
+                        cell1.setCellStyle(redStyle);
+                        cell2.setCellStyle(redStyle);
+                        cell0.setCellStyle(redStyle);
+                        row.setRowStyle(redStyle);
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+
+            }
+            FileOutputStream out = new FileOutputStream(
+                    new File("src/main/resources/Ovozlar.xlsx"));
+            workbook.write(out);
+
+            File file = new File("src/main/resources/Ovozlar.xlsx");
+
+            InputFile inputFile = new InputFile(file);
+            sendDocument.setDocument(inputFile);
+            sendDocument.setChatId(chatId);
+            sendDocument.setCaption("Berilgan ovozlar ro'yxati");
+            return sendDocument;
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
     }
 }

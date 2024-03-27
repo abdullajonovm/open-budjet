@@ -3,6 +3,7 @@ package uz.khodirjob.openbudjet.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -31,6 +32,10 @@ public class MyBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             Message message = update.getMessage();
             this.chatId = message.getChatId();
+
+            if (userService.chekUser(chatId))
+                return;
+
             if (message.hasText()) {
                 text(message);
             } else if (message.hasContact()) {
@@ -68,10 +73,30 @@ public class MyBot extends TelegramLongPollingBot {
         switch (text) {
             case "/start" -> start();
             case KeyWords.VOTE_BUTTON_TEXT -> vote();
+            case KeyWords.CONTACT_TEXT -> sendMessage(SendMessage.builder()
+                    .chatId(chatId)
+                    .text(KeyWords.CONNECT_MESSAGE)
+                    .build());
+            case "/ovozlar" -> sendMessage(userService.getVotes(chatId));
+        }
+    }
+
+    private void sendMessage(SendDocument votes) {
+        try {
+            execute(votes);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
         }
     }
 
     private void vote() {
+        if (userService.chekVote(chatId)) {
+            sendMessage(SendMessage.builder()
+                    .chatId(chatId)
+                    .text("Siz ovoz berib bo'lgansiz")
+                    .build());
+            return;
+        }
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text(KeyWords.VOTE_MESSAGE)
@@ -136,12 +161,12 @@ public class MyBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "takrortakrorbot";
+        return "openbudget37_bot";
     }
 
     @Override
     public String getBotToken() {
-        return "6896507973:AAF1NZYduQwZ-tJwlmvMLHIZFDSR7ieECUk";
+        return "7064767128:AAFUfF-AfB-oJsHxSHnD50BL32Luz3dSydg";
     }
 
     public void sendMessage(SendMessage sendMessage) {
