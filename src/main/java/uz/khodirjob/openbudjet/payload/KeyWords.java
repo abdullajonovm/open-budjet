@@ -2,7 +2,7 @@ package uz.khodirjob.openbudjet.payload;
 
 public class KeyWords {
     public static final String
-            HELLO_MESSAGE = "Telegram botimizga hush kelibsiz. Ovoz bering va pul ishlang. Harbir ovoz uchun 20.000 so'mdan pul ishlang. Iltimos davom etishlik uchun tugamni bosing",
+            HELLO_MESSAGE = "Telegram botimizga hush kelibsiz. Ovoz bering va pul ishlang. Harbir ovoz uchun 25.000 so'mdan pul ishlang. Iltimos davom etishlik uchun tugamni bosing",
             TELEPHONE_BUTTON_TEXT = "Telefon raqamni kiritish ☎\uFE0F",
             SELECT_MESSAGE = "Iltimos tanlang",
             VOTE_BUTTON_TEXT = "Ovoz beirsh",
