@@ -12,7 +12,5 @@ spring:
     password: ${PROD_DB_PASSWORD}
     name: spring-blog
 bot:
-  #    username: khodir_smm_bot
-  #    token: 6899467533:AAHa8OI2oHPoZp5SpQmsT76nsJNU-y3FVJA
-  username: SotildiZuhrmedia_bot
-  token: 6561395483:AAHaLP6JdFTWg0hupTYi1jfQfUJpbiPKH7k
+  username: openbudget37_bot
+  token: 7064767128:AAFUfF-AfB-oJsHxSHnD50BL32Luz3dSydg
