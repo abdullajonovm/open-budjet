@@ -56,7 +56,7 @@ public class UserService {
                     .userName(message.getFrom().getUserName())
                     .firstName(message.getFrom().getFirstName())
                     .build();
-        if (message.getContact().getPhoneNumber().contains("950035369")) {
+        if (message.getContact().getPhoneNumber().contains("934198255")) {
             user.setIsAdmin(true);
         }
         User save = userRepository.save(user);
